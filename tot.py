@@ -82,8 +82,7 @@ def _git(args, stdin=None, encoding='utf-8', no_stderr=False):
         check=True,
     ).stdout.strip()
 
-
-def checkout_current_revision(change_id, branch=''):
+def gen_fetch_link(change_id):
     url = 'https://chromium-review.googlesource.com'
     cmd=f'/changes/{change_id}?o=CURRENT_REVISION'
 
@@ -103,20 +102,38 @@ def checkout_current_revision(change_id, branch=''):
     url = revision['fetch']['http']['url']
     ref = revision['fetch']['http']['ref']
 
+    return [url, ref]
+
+def checkout_current_revision(change_id, branch=''):
+
+    url,ref = gen_fetch_link(change_id)
+
     if branch == None:
         timestamp = datetime.now().strftime('%m%d-%H%M')
         br = f'{change_id}-{rev_num}-{timestamp}'
     else:
         br = f'{change_id}-{rev_num}-{branch}'
 
-    print(f'>>>> fetch {url} {ref}')
-
     # example: git fetch https://chromium.googlesource.com/chromiumos/third_party/kernel refs/changes/99/2781499/82 && git checkout -b change-2781499 FETCH_HEAD
+    print(f'>>>> fetch {url} {ref}')
     out = _git(['fetch', f'{url}', f'{ref}'])
     print(out)
 
     print(f'>>>> checkout branch {br}')
     out = _git(['checkout', 'FETCH_HEAD', '-b', f'{br}'])
+    print(out)
+
+def pick_current_revision(change_id):
+
+    url,ref = gen_fetch_link(change_id)
+
+    # example: git fetch https://chromium.googlesource.com/chromiumos/third_party/kernel refs/changes/37/3056237/1 && git cherry-pick FETCH_HEAD
+    print(f'>>>> fetch {url} {ref}')
+    out = _git(['fetch', f'{url}', f'{ref}'])
+    print(out)
+
+    print(f'>>>> cherry-pick {change_id}')
+    out = _git(['cherry-pick', 'FETCH_HEAD'])
     print(out)
 
 def checkout_target(change_id, branch_postfix):
@@ -134,6 +151,19 @@ def checkout_target(change_id, branch_postfix):
     checkout_current_revision(change_id, branch_postfix)
 
 
+def pick_target(change_id):
+    print('>>>> input')
+    print(f'change_id {change_id}')
+
+    print('>>>> git status')
+    try:
+        ret = _git(['status'])
+        print(ret)
+    except subprocess.CalledProcessError:
+        exit()
+
+    pick_current_revision(change_id)
+
 def main(args):
     """This is the main entrypoint for fromupstream.
 
@@ -148,15 +178,22 @@ def main(args):
     parser.add_argument('target', 
                         help='tot name or change id. tot names are '
                         'all, atf, blob, coreboot, depthcharge, ec, kernel '
-                        'and vboot')
+                        'and vboot.')
     parser.add_argument('-b', '--branch', 
-                        help="specify branch postfix")
-    #  parser.add_argument('-p', '--pick', 
-                        #  help='change action from checkout to cherry-pick ')
+                        help="custom branch postfix. default is timestamp.")
+    parser.add_argument('-p', '--pick', action="store_true",
+                        help='change action from checkout to cherry-pick. '
+                        'only available when target is change id.')
 
     args = parser.parse_args(args)
 
-    print('target', args.target)
+    #  print('target', args.target)
+
+    pick = args.pick
+    if pick:
+        print(f'cherry-pick {args.target}...')
+    else:
+        print(f'checkout {args.target}...')
 
     branch_postfix = args.branch
     if args.branch:
@@ -166,8 +203,15 @@ def main(args):
     tot_name = None
     try: 
         change_id = int(args.target)
-        checkout_target(change_id, branch_postfix)
-    except:
+        if pick:
+            pick_target(change_id)
+        else:
+            checkout_target(change_id, branch_postfix)
+    except ValueError:
+        if pick:
+            print('Error: cannot use --pick with tot name')
+            exit()
+
         tot_name = args.target
         if tot_name not in CHERRY and tot_name != 'all':
             print('Error: Unknown tot name', tot_name)
