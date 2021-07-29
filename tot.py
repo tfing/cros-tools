@@ -102,11 +102,11 @@ def gen_fetch_link(change_id):
     url = revision['fetch']['http']['url']
     ref = revision['fetch']['http']['ref']
 
-    return [url, ref]
+    return [url, ref, rev_num]
 
 def checkout_current_revision(change_id, branch=''):
 
-    url,ref = gen_fetch_link(change_id)
+    url,ref,rev_num = gen_fetch_link(change_id)
 
     if branch == None:
         timestamp = datetime.now().strftime('%m%d-%H%M')
@@ -125,7 +125,7 @@ def checkout_current_revision(change_id, branch=''):
 
 def pick_current_revision(change_id):
 
-    url,ref = gen_fetch_link(change_id)
+    url,ref,rev_num = gen_fetch_link(change_id)
 
     # example: git fetch https://chromium.googlesource.com/chromiumos/third_party/kernel refs/changes/37/3056237/1 && git cherry-pick FETCH_HEAD
     print(f'>>>> fetch {url} {ref}')
