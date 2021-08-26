@@ -52,6 +52,8 @@ CHERRY = {
         { 'change_id':2772411, 'path':'/src/platform/vboot_reference'},
 }
 
+FW_TOTS = ['atf', 'blob', 'coreboot', 'depthcharge', 'vboot']
+
 def _git(args, stdin=None, encoding='utf-8', no_stderr=False):
     """Calls a git subcommand.
 
@@ -177,8 +179,8 @@ def main(args):
 
     parser.add_argument('target', 
                         help='tot name or change id. tot names are '
-                        'all, atf, blob, coreboot, depthcharge, ec, kernel '
-                        'and vboot.')
+                        'atf, blob, coreboot, depthcharge, ec, kernel '
+                        'and vboot. tot group name is fw.')
     parser.add_argument('-b', '--branch', 
                         help="custom branch postfix. default is timestamp.")
     parser.add_argument('-p', '--pick', action="store_true",
@@ -213,16 +215,16 @@ def main(args):
             exit()
 
         tot_name = args.target
-        if tot_name not in CHERRY and tot_name != 'all':
+        if tot_name not in CHERRY and tot_name != 'fw':
             print('Error: Unknown tot name', tot_name)
             exit()
 
-        if tot_name == 'all':
-            for name, cfg in CHERRY.items():
+        if tot_name == 'fw':
+            for name in FW_TOTS:
                 print('\n>>>> checkout', name)
-                change_id = cfg['change_id']
+                change_id = CHERRY[name]['change_id']
 
-                git_path = f'{CROS_PATH}{cfg["path"]}'
+                git_path = f'{CROS_PATH}{CHERRY[name]["path"]}'
                 os.chdir(git_path)
 
                 checkout_target(change_id, branch_postfix)
