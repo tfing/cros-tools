@@ -106,19 +106,28 @@ def gen_fetch_link(change_id):
 
     return [url, ref, rev_num]
 
-def checkout_current_revision(change_id, branch=''):
+def checkout_revision(change_id, branch='', patchset=9999):
 
     url,ref,rev_num = gen_fetch_link(change_id)
 
+    target_ref = ref
+    target_rev = rev_num
+    if patchset < rev_num:
+        target_rev = patchset
+        target_ref = ref[:ref.rfind(str(rev_num))] + str(patchset) 
+    elif patchset != 9999:
+        print(f'Error: {patchset} exceed max revisions {rev_num}')
+        return 
+
     if branch == None:
         timestamp = datetime.now().strftime('%m%d-%H%M')
-        br = f'{change_id}-{rev_num}-{timestamp}'
+        br = f'{change_id}-{target_rev}-{timestamp}'
     else:
-        br = f'{change_id}-{rev_num}-{branch}'
+        br = f'{change_id}-{target_rev}-{branch}'
 
     # example: git fetch https://chromium.googlesource.com/chromiumos/third_party/kernel refs/changes/99/2781499/82 && git checkout -b change-2781499 FETCH_HEAD
-    print(f'>>>> fetch {url} {ref}')
-    out = _git(['fetch', f'{url}', f'{ref}'])
+    print(f'>>>> fetch {url} {target_ref}')
+    out = _git(['fetch', f'{url}', f'{target_ref}'])
     print(out)
 
     print(f'>>>> checkout branch {br}')
@@ -144,9 +153,9 @@ def checkout_main_branch():
     out = _git(['checkout', 'm/main'])
     print(out)
 
-def checkout_target(change_id, branch_postfix):
+def checkout_target(change_id, branch_postfix, patchset):
     print('>>>> input')
-    print(f'change_id {change_id}')
+    print(f'change_id {change_id} patchset {patchset}')
     print(f'branch postfix {branch_postfix}')
 
     print('>>>> git status')
@@ -156,7 +165,7 @@ def checkout_target(change_id, branch_postfix):
     except subprocess.CalledProcessError:
         exit()
 
-    checkout_current_revision(change_id, branch_postfix)
+    checkout_revision(change_id, branch_postfix, patchset)
 
 def checkout_main():
     print('>>>> git status')
@@ -202,6 +211,8 @@ def main(args):
     parser.add_argument('-p', '--pick', action="store_true",
                         help='change action from checkout to cherry-pick. '
                         'only available when target is change id.')
+    parser.add_argument('-v', '--revision', 
+                        help="checkout specific patchset. default is latest.")
 
     args = parser.parse_args(args)
 
@@ -217,6 +228,11 @@ def main(args):
     if args.branch:
         branch_postfix = args.branch
 
+    patchset = 9999
+    if args.revision:
+        patchset = int(args.revision)
+        print(f'checkout patchset {patchset}...')
+
     change_id = 0
     tot_name = None
     try: 
@@ -224,7 +240,7 @@ def main(args):
         if pick:
             pick_target(change_id)
         else:
-            checkout_target(change_id, branch_postfix)
+            checkout_target(change_id, branch_postfix, patchset)
     except ValueError:
         if pick:
             print('Error: cannot use --pick with tot name')
@@ -243,7 +259,7 @@ def main(args):
                 git_path = f'{CROS_PATH}{CHERRY[name]["path"]}'
                 os.chdir(git_path)
 
-                #  checkout_target(change_id, branch_postfix)
+                #  checkout_target(change_id, branch_postfix, patchset)
                 checkout_main()
         else:
             change_id = CHERRY[tot_name]['change_id']
@@ -251,7 +267,7 @@ def main(args):
             git_path = f'{CROS_PATH}{CHERRY[tot_name]["path"]}'
             os.chdir(git_path)
 
-            checkout_target(change_id, branch_postfix)
+            checkout_target(change_id, branch_postfix, patchset)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
