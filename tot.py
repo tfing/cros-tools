@@ -138,6 +138,12 @@ def pick_current_revision(change_id):
     out = _git(['cherry-pick', 'FETCH_HEAD'])
     print(out)
 
+def checkout_main_branch():
+
+    print(f'>>>> checkout main')
+    out = _git(['checkout', 'm/main'])
+    print(out)
+
 def checkout_target(change_id, branch_postfix):
     print('>>>> input')
     print(f'change_id {change_id}')
@@ -151,6 +157,16 @@ def checkout_target(change_id, branch_postfix):
         exit()
 
     checkout_current_revision(change_id, branch_postfix)
+
+def checkout_main():
+    print('>>>> git status')
+    try:
+        ret = _git(['status'])
+        print(ret)
+    except subprocess.CalledProcessError:
+        exit()
+
+    checkout_main_branch()
 
 
 def pick_target(change_id):
@@ -227,7 +243,8 @@ def main(args):
                 git_path = f'{CROS_PATH}{CHERRY[name]["path"]}'
                 os.chdir(git_path)
 
-                checkout_target(change_id, branch_postfix)
+                #  checkout_target(change_id, branch_postfix)
+                checkout_main()
         else:
             change_id = CHERRY[tot_name]['change_id']
 
