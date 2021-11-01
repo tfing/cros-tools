@@ -157,9 +157,11 @@ def pick_revision(change_id, patchset):
     out = _git(['cherry-pick', 'FETCH_HEAD'])
     print(out)
 
-def checkout_main_branch():
+def update_checkout_main_branch():
 
-    print(f'>>>> checkout main')
+    print(f'>>>> update and checkout main')
+    out = _git(['remote', 'update'])
+    print(out)
     out = _git(['checkout', 'm/main'])
     print(out)
 
@@ -185,7 +187,7 @@ def checkout_main():
     except subprocess.CalledProcessError:
         exit()
 
-    checkout_main_branch()
+    update_checkout_main_branch()
 
 
 def pick_target(change_id, patchset):
