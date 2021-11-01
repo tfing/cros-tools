@@ -107,12 +107,13 @@ def gen_fetch_link(change_id):
     return [url, ref, rev_num]
 
 def modify_ref_version(ref, current_rev, target_rev):
-    ret_ref = ''
+    ret_ref = ref
     ret_rev = current_rev
     if target_rev < current_rev:
         ret_rev = target_rev
         ret_ref = ref[:ref.rfind(str(current_rev))] + str(target_rev)
     elif target_rev != 9999:
+        ret_ref = ''
         print(f'Error: {target_rev} exceed max revisions {current_rev}')
 
     return [ret_ref, ret_rev]
