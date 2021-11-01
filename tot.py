@@ -106,17 +106,23 @@ def gen_fetch_link(change_id):
 
     return [url, ref, rev_num]
 
+def modify_ref_version(ref, current_rev, target_rev):
+    ret_ref = ''
+    ret_rev = current_rev
+    if target_rev < current_rev:
+        ret_rev = target_rev
+        ret_ref = ref[:ref.rfind(str(current_rev))] + str(target_rev)
+    elif target_rev != 9999:
+        print(f'Error: {target_rev} exceed max revisions {current_rev}')
+
+    return [ret_ref, ret_rev]
+
 def checkout_revision(change_id, branch='', patchset=9999):
 
     url,ref,rev_num = gen_fetch_link(change_id)
 
-    target_ref = ref
-    target_rev = rev_num
-    if patchset < rev_num:
-        target_rev = patchset
-        target_ref = ref[:ref.rfind(str(rev_num))] + str(patchset) 
-    elif patchset != 9999:
-        print(f'Error: {patchset} exceed max revisions {rev_num}')
+    target_ref, target_rev = modify_ref_version(ref, rev_num, patchset)
+    if target_ref == '':
         return 
 
     if branch == None:
@@ -134,13 +140,17 @@ def checkout_revision(change_id, branch='', patchset=9999):
     out = _git(['checkout', 'FETCH_HEAD', '-b', f'{br}'])
     print(out)
 
-def pick_current_revision(change_id):
+def pick_revision(change_id, patchset):
 
     url,ref,rev_num = gen_fetch_link(change_id)
 
+    target_ref, target_rev = modify_ref_version(ref, rev_num, patchset)
+    if target_ref == '':
+        return
+
     # example: git fetch https://chromium.googlesource.com/chromiumos/third_party/kernel refs/changes/37/3056237/1 && git cherry-pick FETCH_HEAD
-    print(f'>>>> fetch {url} {ref}')
-    out = _git(['fetch', f'{url}', f'{ref}'])
+    print(f'>>>> fetch {url} {target_ref}')
+    out = _git(['fetch', f'{url}', f'{target_ref}'])
     print(out)
 
     print(f'>>>> cherry-pick {change_id}')
@@ -178,7 +188,7 @@ def checkout_main():
     checkout_main_branch()
 
 
-def pick_target(change_id):
+def pick_target(change_id, patchset):
     print('>>>> input')
     print(f'change_id {change_id}')
 
@@ -189,7 +199,7 @@ def pick_target(change_id):
     except subprocess.CalledProcessError:
         exit()
 
-    pick_current_revision(change_id)
+    pick_revision(change_id, patchset)
 
 def main(args):
     """This is the main entrypoint for fromupstream.
@@ -238,7 +248,7 @@ def main(args):
     try: 
         change_id = int(args.target)
         if pick:
-            pick_target(change_id)
+            pick_target(change_id, patchset)
         else:
             checkout_target(change_id, branch_postfix, patchset)
     except ValueError:
