@@ -8,6 +8,7 @@ UPD_FW=0
 UPD_EC=0
 RM_PROTECT=0
 ADD_SSH_KEY=0
+REBOOT=0
 
 if [ $# -eq 0 ]; then
 	echo "$0 -efps -i <ip> -v <version>"
@@ -15,10 +16,11 @@ if [ $# -eq 0 ]; then
 	echo "   -e: update ec"
 	echo "   -p: remove protection, implied -s"
 	echo "   -s: add ssh key to DUT"
+	echo "   -r: reboot after finish update"
 	exit
 fi
 
-while getopts "i:v:efps" flag
+while getopts "i:v:efprs" flag
 do
 	#echo [$flag] [$OPTARG]
 
@@ -35,6 +37,8 @@ do
 		ADD_SSH_KEY=1
 	elif [ "$flag" == "s" ]; then
 		ADD_SSH_KEY=1
+	elif [ "$flag" == "r" ]; then
+		REBOOT=1
 	fi
 done
 
@@ -51,7 +55,7 @@ fi
 echo IP $IP
 echo UPD_FW $UPD_FW
 echo UPD_EC $UPD_EC
-
+echo REBOOT $REBOOT
 
 if [ $RM_PROTECT -eq 1 ]; then
 	ssh-keygen -f $HOME/.ssh/known_hosts -R $IP
@@ -90,7 +94,7 @@ if [ $UPD_EC -eq 1 ]; then
 	echo $EC_PATH
 fi
 
-if [ ! -z $FW_PATH ]; then
+if [ ! -z $FW_PATH ] || [ ! -z $EC_PATH ]; then
 scp $FW_PATH $EC_PATH root@$IP:/tmp
 fi
 
@@ -100,4 +104,8 @@ fi
 
 if [ $UPD_EC -eq 1 ]; then
 ssh root@$IP "flashrom -p ec -w /tmp/$EC_IMAGE_NAME"
+fi
+
+if [ $REBOOT -eq 1 ]; then
+ssh root@$IP reboot
 fi
