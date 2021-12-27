@@ -28,11 +28,13 @@ main() {
   # So to detect a watchdog reset, we should look at "messages after last System
   # boot".
   
+  sleep 10 
+  
   HW_RESET=$(cat /var/log/eventlog.txt | awk 's{s=s"\n"$0;} /System boot/{s=$0;} END{print s;}' | grep -c "Hardware watchdog reset")
   
   if [ "$HW_RESET" != "0" ]; then
     echo "HW watchdog detected in previous boot; preserving to ${DFD_DEST_PATH}"
-    mkdir -p "$(dirname "${DFD_DEST_PATH}")"
+    mkdir -p /var/log/dfd_dump/
     dd if="${DFD_SRC}" of="${DFD_DEST_PATH}"
   else
     echo "No HW watchdog detected."
