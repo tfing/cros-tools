@@ -20,9 +20,10 @@ ssh root@$IP "echo '--fw--' && crossystem fwid && echo && echo '--ec--' && ectoo
 echo '>>> tx dfd file/fw'
 scp dump_dfd root@$IP:/usr/bin/
 scp dump_dfd.conf root@$IP:/etc/init/
+ssh root@$IP "mkdir /var/log/dfd_dump"
 
 echo '>>> print dfd file/fw path'
-ssh root@$IP "sync && ls /usr/bin/dump_dfd* | grep dump_dfd && echo '--' && ls /etc/init/dump_dfd* | grep dump && echo '--' && ls /tmp/image*"
+ssh root@$IP "sync && ls /usr/bin/dump_dfd* | grep dump_dfd && echo '--' && ls /etc/init/dump_dfd* | grep dump && echo '--' && ls /var/log/dfd_dump && echo '--' && ls /tmp/image*"
 
 #echo '>>> flash dfd fw'
 #scp image-tomato.dev.bin root@$IP:/tmp
