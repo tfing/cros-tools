@@ -50,6 +50,8 @@ CHERRY = {
         { 'change_id':2781499, 'path':'/src/third_party/kernel/v5.10'},
         'vboot':
         { 'change_id':2772411, 'path':'/src/platform/vboot_reference'},
+        'debug':
+        { 'change_id':3281584, 'path':'/src/third_party/kernel/v5.10'},
 }
 
 FW_TOTS = ['atf', 'blob', 'coreboot', 'depthcharge', 'vboot']
@@ -217,7 +219,7 @@ def main(args):
 
     parser.add_argument('target', 
                         help='tot name or change id. tot names are '
-                        'atf, blob, coreboot, depthcharge, ec, kernel '
+                        'atf, blob, coreboot, depthcharge, ec, debug, kernel '
                         'and vboot. tot group name is fw.')
     parser.add_argument('-b', '--branch', 
                         help="custom branch postfix. default is timestamp.")
