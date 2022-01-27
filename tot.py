@@ -35,6 +35,12 @@ from datetime import datetime
 errprint = functools.partial(print, file=sys.stderr)
 
 CROS_PATH='/proj/mtk15399/cros'
+CORSOLA = {
+        'kernel':
+        { 'change_id':3290835, 'path':'/src/third_party/kernel/v5.15'},
+}
+
+BOARD = ''
 CHERRY = {
         'atf':
         { 'change_id':2780815, 'path':'/src/third_party/arm-trusted-firmware'},
@@ -221,6 +227,8 @@ def main(args):
                         help='tot name or change id. tot names are '
                         'atf, blob, coreboot, depthcharge, ec, debug, kernel '
                         'and vboot. tot group name is fw.')
+    parser.add_argument('-d', '--board', default="corsola",
+                        help='board name, {cherry, default=corsola}')
     parser.add_argument('-b', '--branch', 
                         help="custom branch postfix. default is timestamp.")
     parser.add_argument('-p', '--pick', action="store_true",
@@ -232,6 +240,15 @@ def main(args):
     args = parser.parse_args(args)
 
     #  print('target', args.target)
+
+    #  print('board', args.board)
+    if args.board == 'cherry':
+        BOARD = CHERRY
+    elif args.board == 'corsola':
+        BOARD = CORSOLA
+    else:
+        print('Error: unknown board name:', args.board)
+        exit()
 
     pick = args.pick
     if pick:
@@ -262,24 +279,24 @@ def main(args):
             exit()
 
         tot_name = args.target
-        if tot_name not in CHERRY and tot_name != 'fw':
+        if tot_name not in BOARD and tot_name != 'fw':
             print('Error: Unknown tot name', tot_name)
             exit()
 
         if tot_name == 'fw':
             for name in FW_TOTS:
                 print('\n>>>> checkout', name)
-                change_id = CHERRY[name]['change_id']
+                change_id = BOARD[name]['change_id']
 
-                git_path = f'{CROS_PATH}{CHERRY[name]["path"]}'
+                git_path = f'{CROS_PATH}{BOARD[name]["path"]}'
                 os.chdir(git_path)
 
                 #  checkout_target(change_id, branch_postfix, patchset)
                 checkout_main()
         else:
-            change_id = CHERRY[tot_name]['change_id']
+            change_id = BOARD[tot_name]['change_id']
 
-            git_path = f'{CROS_PATH}{CHERRY[tot_name]["path"]}'
+            git_path = f'{CROS_PATH}{BOARD[tot_name]["path"]}'
             os.chdir(git_path)
 
             checkout_target(change_id, branch_postfix, patchset)
