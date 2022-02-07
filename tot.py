@@ -134,11 +134,11 @@ def checkout_revision(change_id, branch='', patchset=9999):
     if target_ref == '':
         return 
 
+    timestamp = datetime.now().strftime('%m%d-%H%M')
     if branch == None:
-        timestamp = datetime.now().strftime('%m%d-%H%M')
         br = f'{change_id}-{target_rev}-{timestamp}'
     else:
-        br = f'{change_id}-{target_rev}-{branch}'
+        br = f'{change_id}-{target_rev}-{timestamp}-{branch}'
 
     # example: git fetch https://chromium.googlesource.com/chromiumos/third_party/kernel refs/changes/99/2781499/82 && git checkout -b change-2781499 FETCH_HEAD
     print(f'>>>> fetch {url} {target_ref}')
@@ -257,8 +257,6 @@ def main(args):
         print(f'checkout {args.target}...')
 
     branch_postfix = args.branch
-    if args.branch:
-        branch_postfix = args.branch
 
     patchset = 9999
     if args.revision:
@@ -298,6 +296,10 @@ def main(args):
 
             git_path = f'{CROS_PATH}{BOARD[tot_name]["path"]}'
             os.chdir(git_path)
+
+            # append branch name to easily identify it
+            if branch_postfix == None:
+                branch_postfix = tot_name
 
             checkout_target(change_id, branch_postfix, patchset)
 
