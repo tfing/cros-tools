@@ -35,12 +35,14 @@ from datetime import datetime
 errprint = functools.partial(print, file=sys.stderr)
 
 CROS_PATH='/proj/mtk15399/cros'
+
+BOARD = ''
 CORSOLA = {
         'kernel':
         { 'change_id':3290835, 'path':'/src/third_party/kernel/v5.15'},
+        'sof':
+        { 'change_id':3423986, 'path':'/src/third_party/kernel/v5.15'},
 }
-
-BOARD = ''
 CHERRY = {
         'atf':
         { 'change_id':2780815, 'path':'/src/third_party/arm-trusted-firmware'},
