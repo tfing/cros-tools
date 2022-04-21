@@ -53,6 +53,9 @@ echo UPD_FW $UPD_FW
 echo UPD_EC $UPD_EC
 echo REBOOT $REBOOT
 
+# prevent warning messages when use the same IP on different DUT
+ssh-keygen -f $HOME/.ssh/known_hosts -R $IP
+
 if [ $RM_PROTECT -eq 1 ]; then
 	ssh root@$IP "\
 	/usr/share/vboot/bin/make_dev_ssd.sh \
