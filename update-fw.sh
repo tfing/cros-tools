@@ -15,7 +15,6 @@ if [ $# -eq 0 ]; then
 	echo "   -f: update fw"
 	echo "   -e: update ec"
 	echo "   -p: remove protection, implied -s"
-	echo "   -s: add ssh key to DUT"
 	echo "   -r: reboot after finish update"
 	exit
 fi
@@ -34,9 +33,6 @@ do
 		UPD_EC=1
 	elif [ "$flag" == "p" ]; then
 		RM_PROTECT=1
-		ADD_SSH_KEY=1
-	elif [ "$flag" == "s" ]; then
-		ADD_SSH_KEY=1
 	elif [ "$flag" == "r" ]; then
 		REBOOT=1
 	fi
@@ -58,8 +54,7 @@ echo UPD_EC $UPD_EC
 echo REBOOT $REBOOT
 
 if [ $RM_PROTECT -eq 1 ]; then
-	ssh-keygen -f $HOME/.ssh/known_hosts -R $IP
-	ssh root@$IP " \
+	ssh root@$IP "\
 	/usr/share/vboot/bin/make_dev_ssd.sh \
 	--remove_rootfs_verification --partitions 2 \
 	&& /usr/share/vboot/bin/make_dev_ssd.sh \
@@ -67,11 +62,6 @@ if [ $RM_PROTECT -eq 1 ]; then
 	&& reboot"
 	
 	sleep 20
-fi
-
-if [ $ADD_SSH_KEY -eq 1 ]; then
-	ssh-keygen -f $HOME/.ssh/known_hosts -R $IP
-	ssh-copy-id -i $HOME/.ssh/id_rsa.pub root@$IP
 fi
 
 if [ $UPD_FW -eq 1 ]; then
